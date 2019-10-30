@@ -39,21 +39,7 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
             var baseNode = (BinaryExpressionSyntax)base.VisitBinaryExpression(node);
             if (baseNode.OperatorToken.IsKind(SyntaxKind.EqualsEqualsToken))
             {
-                return SyntaxFactory.InvocationExpression(
-                SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    baseNode.Left,
-                    SyntaxFactory.IdentifierName("SafeEquals")
-                ),
-                argumentList: SyntaxFactory.ArgumentList(
-                    SyntaxFactory.Token(SyntaxKind.OpenParenToken),
-                    SyntaxFactory.SeparatedList(new[]
-                    {
-                        SyntaxFactory.Argument(baseNode.Right),
-                    }),
-                    SyntaxFactory.Token(SyntaxKind.CloseParenToken)
-                )
-            );
+                return CreateMemberInvocationExpression("SafeEquals", baseNode.Left, baseNode.Right);
             }
 
             return node;
@@ -66,25 +52,31 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
                 ? SyntaxFactory.ParenthesizedExpression(binary)
                 : baseNode.Condition;
 
+            return CreateMemberInvocationExpression(
+                "Match",
+                condition,
+                SyntaxFactory.SimpleLambdaExpression(
+                    parameter: SyntaxFactory.Parameter(SyntaxFactory.Identifier("t")),
+                    body: baseNode.WhenTrue
+                ),
+                SyntaxFactory.SimpleLambdaExpression(
+                    parameter: SyntaxFactory.Parameter(SyntaxFactory.Identifier("f")),
+                    body: baseNode.WhenFalse
+                )
+            );
+        }
+
+        private SyntaxNode CreateMemberInvocationExpression(string name, ExpressionSyntax member, params ExpressionSyntax[] arguments)
+        {
             return SyntaxFactory.InvocationExpression(
-                SyntaxFactory.MemberAccessExpression(
+                expression: SyntaxFactory.MemberAccessExpression(
                     SyntaxKind.SimpleMemberAccessExpression,
-                    condition,
-                    SyntaxFactory.IdentifierName("Match")
+                    member,
+                    SyntaxFactory.IdentifierName(name)
                 ),
                 argumentList: SyntaxFactory.ArgumentList(
                     SyntaxFactory.Token(SyntaxKind.OpenParenToken),
-                    SyntaxFactory.SeparatedList(new[]
-                    {
-                        SyntaxFactory.Argument(SyntaxFactory.SimpleLambdaExpression(
-                            parameter: SyntaxFactory.Parameter(SyntaxFactory.Identifier("t")),
-                            body: baseNode.WhenTrue
-                        )),
-                        SyntaxFactory.Argument(SyntaxFactory.SimpleLambdaExpression(
-                            parameter: SyntaxFactory.Parameter(SyntaxFactory.Identifier("f")),
-                            body: baseNode.WhenFalse
-                        ))
-                    }),
+                    SyntaxFactory.SeparatedList(arguments.Select(SyntaxFactory.Argument)),
                     SyntaxFactory.Token(SyntaxKind.CloseParenToken)
                 )
             );
