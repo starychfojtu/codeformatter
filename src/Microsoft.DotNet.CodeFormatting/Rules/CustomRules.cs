@@ -41,6 +41,10 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
             {
                 return CreateMemberInvocationExpression("SafeEquals", baseNode.Left, baseNode.Right);
             }
+            else if (baseNode.OperatorToken.IsKind(SyntaxKind.NotEqualsExpression))
+            {
+                return CreateMemberInvocationExpression("SafeNotEquals", baseNode.Left, baseNode.Right);
+            }
 
             return node;
         }
