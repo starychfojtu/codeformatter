@@ -19,7 +19,7 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
         public const int BraceNewLineRule = 4;
         public const int NonAsciiChractersAreEscapedInLiterals = 5;
         public const int CopyrightHeaderRule = 6;
-        public const int SafeEquals = 7;
+        public const int CustomRules = 7;
     }
 
     // Please keep these values sorted by number, not rule name.    
