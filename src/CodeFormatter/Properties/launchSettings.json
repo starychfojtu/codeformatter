@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CodeFormatter": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\Pepa\\source\\repos\\TestApp\\TestApp.sln"
+    }
+  }
+}
