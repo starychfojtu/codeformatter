@@ -34,11 +34,37 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
 
     internal sealed class CustomRuleRewriter : CSharpSyntaxRewriter
     {
+        public override SyntaxNode VisitBinaryExpression(BinaryExpressionSyntax node)
+        {
+            var baseNode = (BinaryExpressionSyntax)base.VisitBinaryExpression(node);
+            if (baseNode.OperatorToken.IsKind(SyntaxKind.EqualsEqualsToken))
+            {
+                return SyntaxFactory.InvocationExpression(
+                SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    baseNode.Left,
+                    SyntaxFactory.IdentifierName("SafeEquals")
+                ),
+                argumentList: SyntaxFactory.ArgumentList(
+                    SyntaxFactory.Token(SyntaxKind.OpenParenToken),
+                    SyntaxFactory.SeparatedList(new[]
+                    {
+                        SyntaxFactory.Argument(baseNode.Right),
+                    }),
+                    SyntaxFactory.Token(SyntaxKind.CloseParenToken)
+                )
+            );
+            }
+
+            return node;
+        }
+
         public override SyntaxNode VisitConditionalExpression(ConditionalExpressionSyntax node)
         {
-            var condition = node.Condition is BinaryExpressionSyntax binary
+            var baseNode = (ConditionalExpressionSyntax)base.VisitConditionalExpression(node);
+            var condition = baseNode.Condition is BinaryExpressionSyntax binary
                 ? SyntaxFactory.ParenthesizedExpression(binary)
-                : node.Condition;
+                : baseNode.Condition;
 
             return SyntaxFactory.InvocationExpression(
                 SyntaxFactory.MemberAccessExpression(
@@ -52,11 +78,11 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
                     {
                         SyntaxFactory.Argument(SyntaxFactory.SimpleLambdaExpression(
                             parameter: SyntaxFactory.Parameter(SyntaxFactory.Identifier("t")),
-                            body: node.WhenTrue
+                            body: baseNode.WhenTrue
                         )),
                         SyntaxFactory.Argument(SyntaxFactory.SimpleLambdaExpression(
                             parameter: SyntaxFactory.Parameter(SyntaxFactory.Identifier("f")),
-                            body: node.WhenFalse
+                            body: baseNode.WhenFalse
                         ))
                     }),
                     SyntaxFactory.Token(SyntaxKind.CloseParenToken)
